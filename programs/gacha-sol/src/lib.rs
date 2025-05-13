@@ -34,11 +34,15 @@ pub mod gacha_sol {
         instructions::create_pull(ctx, params)
     }
 
-    pub fn verify_pull<'info>(
-        ctx: Context<'_, '_, '_, 'info, VerifyPull<'info>>,
-        params: VerifyPullParams,
+    pub fn apply_pull_pending_balance<'info>(
+        ctx: Context<'_, '_, '_, 'info, ApplyPullPendingBalance<'info>>,
+        params: ApplyPullPendingBalanceParams,
     ) -> Result<()> {
-        instructions::verify_pull(ctx, params)
+        instructions::apply_pull_pending_balance(ctx, params)
+    }
+
+    pub fn verify_pull<'info>(ctx: Context<'_, '_, '_, 'info, VerifyPull<'info>>) -> Result<()> {
+        instructions::verify_pull(ctx)
     }
 
     pub fn buy_pull<'info>(ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>) -> Result<()> {

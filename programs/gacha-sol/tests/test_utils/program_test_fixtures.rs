@@ -326,6 +326,17 @@ impl ProgramTestFixtures {
         Ok(proof_account.decrypt_supply(&encrypt_balance)?)
     }
 
+    pub async fn get_token_account_decrypted_decryptable_available_balance_with_pubkey(
+        &mut self,
+        token_account: &Pubkey,
+        proof_account: &impl ProofAccount,
+    ) -> Result<u64> {
+        let encrypt_balance = self
+            .get_token_account_decryptable_available_balance(token_account)
+            .await?;
+        Ok(proof_account.decrypt_supply(&encrypt_balance)?)
+    }
+
     pub async fn get_token_account_available_balance(
         &mut self,
         token_account_pubkey: &Pubkey,
@@ -523,10 +534,11 @@ impl ProgramTestFixtures {
     pub async fn create_confidential_transfer_mint(
         &mut self,
         mint_proof_account: &SignerProofAccount,
+        mint_authority: &Keypair,
         decimals: u8,
     ) -> Result<Signature> {
         let payer_pubkey = self.payer.pubkey();
-        let authority_pubkey = self.authority.pubkey();
+        let authority_pubkey = mint_authority.pubkey();
 
         let mint_pubkey = mint_proof_account.pubkey();
         let mint_ae_key = mint_proof_account.get_ae_key()?;

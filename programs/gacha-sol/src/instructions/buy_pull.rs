@@ -17,7 +17,7 @@ pub fn buy_pull<'info>(ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>) -> Resul
         pull.buyer == Pubkey::default(),
         GachaError::PullAlreadyPurchased
     );
-    require!(!pull.verified, GachaError::PullNotVerified);
+    require!(pull.verified, GachaError::PullNotVerified);
     require!(!pull.claimed, GachaError::PullAlreadyClaimed);
 
     pull.buyer = ctx.accounts.buyer.key();

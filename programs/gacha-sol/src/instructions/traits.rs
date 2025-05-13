@@ -39,13 +39,15 @@ pub trait CreatePullInstruction {
     fn get_reward_vault_pubkey(&self) -> Pubkey;
 }
 
-pub trait VerifyPullInstruction {
+pub trait ApplyPullPendingBalanceInstruction {
     fn apply_pending_balance(
         &self,
         new_decryptable_available_balance: &[u8; AE_CIPHERTEXT_MAX_BASE64_LEN],
     ) -> Result<()>;
+}
 
-    fn verify_reward_mint(&self) -> Result<()>;
+pub trait VerifyPullInstruction {
+    fn verify_reward_balance(&self) -> Result<()>;
 }
 
 pub trait BuyPullInstruction {

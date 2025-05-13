@@ -20,19 +20,31 @@ use spl_token_confidential_transfer_ciphertext_arithmetic::subtract;
 use crate::{
     error::GachaError,
     event::PullVerified,
-    state::{GameConfig, Pull},
+    state::{GameConfig, Pull, VerifyPullParams},
     utils::{token_2022::Token2022, zk_elgamal_proof_program::ZkElgamalProof},
 };
 
 use super::VerifyPullInstruction;
 
-pub fn verify_pull<'info>(ctx: Context<'_, '_, '_, 'info, VerifyPull<'info>>) -> Result<()> {
+pub fn verify_pull<'info>(
+    ctx: Context<'_, '_, '_, 'info, VerifyPull<'info>>,
+    params: VerifyPullParams,
+) -> Result<()> {
     // verify the current reward balance
-    ctx.verify_reward_balance()?;
+    ctx.verify_pull_balance()?;
+
+    // TODO: Verify proof accounts
 
     // Set verification flag
     let pull = &mut ctx.accounts.pull;
     pull.verified = true;
+
+    // Store proof accounts
+    pull.transfer_amount_auditor_ciphertext_hi = params.transfer_amount_auditor_ciphertext_hi;
+    pull.transfer_amount_auditor_ciphertext_lo = params.transfer_amount_auditor_ciphertext_lo;
+    pull.equality_proof_account = ctx.accounts.equality_proof_account.key();
+    pull.ciphertext_validity_proof_account = ctx.accounts.ciphertext_validity_proof_account.key();
+    pull.range_proof_account = ctx.accounts.range_proof_account.key();
 
     emit!(PullVerified {
         id: pull.id,
@@ -44,7 +56,7 @@ pub fn verify_pull<'info>(ctx: Context<'_, '_, '_, 'info, VerifyPull<'info>>) ->
 
 #[derive(Accounts)]
 pub struct VerifyPull<'info> {
-    #[account( has_one=authority)]
+    #[account(mut, has_one=authority)]
     pub game_config: Box<Account<'info, GameConfig>>,
     #[account(mut, has_one=reward_vault)]
     pub pull: Box<Account<'info, Pull>>,
@@ -56,12 +68,28 @@ pub struct VerifyPull<'info> {
         owner = zk_elgamal_proof_program.key()
     )]
     pub zero_ciphertext_proof_context: AccountInfo<'info>,
+    /// CHECK: Equality proof account
+    #[account(
+        owner = zk_elgamal_proof_program.key()
+    )]
+    pub equality_proof_account: AccountInfo<'info>,
+    /// CHECK: Ciphertext validity proof account
+    #[account(
+        owner = zk_elgamal_proof_program.key()
+    )]
+    pub ciphertext_validity_proof_account: AccountInfo<'info>,
+
+    /// CHECK: Range proof account
+    #[account(
+        owner = zk_elgamal_proof_program.key()
+    )]
+    pub range_proof_account: AccountInfo<'info>,
     pub zk_elgamal_proof_program: Program<'info, ZkElgamalProof>,
     pub token_program: Program<'info, Token2022>,
 }
 
 impl<'info> VerifyPullInstruction for Context<'_, '_, '_, 'info, VerifyPull<'info>> {
-    fn verify_reward_balance(&self) -> Result<()> {
+    fn verify_pull_balance(&self) -> Result<()> {
         let reward_vault = &self.accounts.reward_vault;
 
         let data = reward_vault.try_borrow_data()?;

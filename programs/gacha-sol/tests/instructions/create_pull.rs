@@ -4,12 +4,7 @@ use gacha_sol::{
     state::{AE_CIPHERTEXT_MAX_BASE64_LEN, ELGAMAL_PUBKEY_MAX_BASE64_LEN},
 };
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
-use spl_token_2022::{
-    extension::confidential_transfer::instruction::PubkeyValidityProofData,
-    solana_zk_sdk::encryption::pod::{
-        auth_encryption::PodAeCiphertext, elgamal::PodElGamalCiphertext,
-    },
-};
+use spl_token_2022::extension::confidential_transfer::instruction::PubkeyValidityProofData;
 
 use crate::test_utils::{
     confidential_transfer::get_zk_proof_context_state_account_creation_instructions,
@@ -34,9 +29,8 @@ async fn test_create_pull() -> Result<()> {
 
     let pull_proof_account = SignerProofAccount::new();
 
-    let decryptable_zero_balance: PodAeCiphertext = pull_proof_account.encrypt_supply(0)?;
-    let encrypted_amount: PodElGamalCiphertext =
-        pull_proof_account.encrypt_amount_ciphertext(expected_amount)?;
+    let decryptable_zero_balance = pull_proof_account.encrypt_supply(0)?;
+    let encrypted_amount = pull_proof_account.encrypt_amount_ciphertext(expected_amount)?;
 
     // Convert to base64 strings
     let decryptable_zero_balance_base64 = decryptable_zero_balance.to_string();

@@ -17,6 +17,14 @@ pub struct SignerProofAccount {
     pub keypair: Keypair,
 }
 
+impl Clone for SignerProofAccount {
+    fn clone(&self) -> Self {
+        Self {
+            keypair: self.keypair.insecure_clone(),
+        }
+    }
+}
+
 impl SignerProofAccount {
     pub fn new() -> Self {
         Self {

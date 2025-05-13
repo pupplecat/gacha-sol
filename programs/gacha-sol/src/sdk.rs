@@ -3,13 +3,16 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, system_program},
     InstructionData,
 };
-use anchor_spl::token_2022;
+use anchor_spl::{token, token_2022};
 
 use crate::{
     accounts, instruction,
     pda::{get_game_config_pubkey, get_pull_pubkey, get_reward_vault_pubkey},
-    state::{CreatePullParams, AE_CIPHERTEXT_MAX_BASE64_LEN, ELGAMAL_PUBKEY_MAX_BASE64_LEN},
-    utils::rent::Rent,
+    state::{
+        ApplyPullPendingBalanceParams, CreatePullParams, AE_CIPHERTEXT_MAX_BASE64_LEN,
+        ELGAMAL_PUBKEY_MAX_BASE64_LEN,
+    },
+    utils::{rent::Rent, zk_elgamal_proof_program::ZkElgamalProof},
     ID,
 };
 
@@ -58,6 +61,67 @@ impl accounts::CreatePull {
             system_program: system_program::ID,
             token_program: token_2022::ID,
             rent: Rent::id(),
+        }
+    }
+}
+
+impl accounts::ApplyPullPendingBalance {
+    pub fn populate(authority: Pubkey, pull_id: u64) -> Self {
+        let game_config = get_game_config_pubkey();
+        let pull = get_pull_pubkey(pull_id);
+        let reward_vault = get_reward_vault_pubkey(pull);
+
+        Self {
+            game_config,
+            pull,
+            reward_vault,
+            authority,
+            token_program: token_2022::ID,
+        }
+    }
+}
+
+impl accounts::VerifyPull {
+    pub fn populate(
+        authority: Pubkey,
+        zero_ciphertext_proof_context: Pubkey,
+        pull_id: u64,
+    ) -> Self {
+        let game_config = get_game_config_pubkey();
+        let pull = get_pull_pubkey(pull_id);
+        let reward_vault = get_reward_vault_pubkey(pull);
+
+        Self {
+            game_config,
+            pull,
+            reward_vault,
+            authority,
+            zero_ciphertext_proof_context,
+            zk_elgamal_proof_program: ZkElgamalProof::id(),
+            token_program: token_2022::ID,
+        }
+    }
+}
+
+impl accounts::BuyPull {
+    pub fn populate(
+        buyer: Pubkey,
+        buyer_purchase_account: Pubkey,
+        game_vault: Pubkey,
+        purchase_mint: Pubkey,
+        pull_id: u64,
+    ) -> Self {
+        let game_config = get_game_config_pubkey();
+        let pull = get_pull_pubkey(pull_id);
+
+        Self {
+            game_config,
+            pull,
+            buyer,
+            buyer_purchase_account,
+            game_vault,
+            purchase_mint,
+            token_program: token::ID,
         }
     }
 }
@@ -121,6 +185,71 @@ impl instruction::CreatePull {
                 },
             }
             .data(),
+        }
+    }
+}
+
+impl instruction::ApplyPullPendingBalance {
+    pub fn populate(
+        authority: Pubkey,
+        pull_id: u64,
+        new_decryptable_available_balance: [u8; AE_CIPHERTEXT_MAX_BASE64_LEN],
+    ) -> Instruction {
+        let apply_pull_pending_balance_accounts =
+            accounts::ApplyPullPendingBalance::populate(authority, pull_id).to_account_metas(None);
+
+        Instruction {
+            program_id: ID,
+            accounts: apply_pull_pending_balance_accounts,
+            data: instruction::ApplyPullPendingBalance {
+                params: ApplyPullPendingBalanceParams {
+                    new_decryptable_available_balance,
+                },
+            }
+            .data(),
+        }
+    }
+}
+
+impl instruction::VerifyPull {
+    pub fn populate(
+        authority: Pubkey,
+        zero_ciphertext_proof_context: Pubkey,
+        pull_id: u64,
+    ) -> Instruction {
+        let verify_pull_accounts =
+            accounts::VerifyPull::populate(authority, zero_ciphertext_proof_context, pull_id)
+                .to_account_metas(None);
+
+        Instruction {
+            program_id: ID,
+            accounts: verify_pull_accounts,
+            data: instruction::VerifyPull {}.data(),
+        }
+    }
+}
+
+impl instruction::BuyPull {
+    pub fn populate(
+        buyer: Pubkey,
+        buyer_purchase_account: Pubkey,
+        game_vault: Pubkey,
+        purchase_mint: Pubkey,
+        pull_id: u64,
+    ) -> Instruction {
+        let buy_pull_accounts = accounts::BuyPull::populate(
+            buyer,
+            buyer_purchase_account,
+            game_vault,
+            purchase_mint,
+            pull_id,
+        )
+        .to_account_metas(None);
+
+        Instruction {
+            program_id: ID,
+            accounts: buy_pull_accounts,
+            data: instruction::BuyPull {}.data(),
         }
     }
 }

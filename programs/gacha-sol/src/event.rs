@@ -21,6 +21,13 @@ pub struct PullCreated {
     pub encrypted_amount: [u8; ELGAMAL_PUBKEY_MAX_BASE64_LEN],
 }
 
+/// Event emitted when pending balance of a pull applied
+#[event]
+pub struct PendingBalanceApplied {
+    pub id: u64,
+    pub pull: Pubkey,
+}
+
 /// Event emitted when a pull is created
 #[event]
 pub struct PullVerified {

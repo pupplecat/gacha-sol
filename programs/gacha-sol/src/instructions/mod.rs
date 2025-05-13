@@ -1,3 +1,4 @@
+mod apply_pull_pending_balance;
 mod buy_pull;
 mod claim_pull;
 mod create_pull;
@@ -5,6 +6,7 @@ mod initialize_game_config;
 mod traits;
 mod verify_pull;
 
+pub use apply_pull_pending_balance::*;
 pub use buy_pull::*;
 pub use claim_pull::*;
 pub use create_pull::*;
