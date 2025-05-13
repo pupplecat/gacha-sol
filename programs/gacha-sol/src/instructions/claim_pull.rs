@@ -1,8 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    token::{Mint, TokenAccount},
-    token_2022::Token2022,
-};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::{error::GachaError, state::Pull};
 
@@ -34,5 +31,5 @@ pub struct ClaimPull<'info> {
     #[account(mut)]
     pub buyer_reward_account: Account<'info, TokenAccount>,
     pub reward_mint: Account<'info, Mint>,
-    pub token_program: Program<'info, Token2022>,
+    pub token_program: Program<'info, Token>,
 }

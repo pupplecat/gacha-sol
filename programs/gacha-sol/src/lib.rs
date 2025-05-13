@@ -6,6 +6,7 @@ pub mod sdk;
 
 mod instructions;
 mod pda;
+mod utils;
 
 pub mod state;
 
@@ -31,6 +32,13 @@ pub mod gacha_sol {
         params: CreatePullParams,
     ) -> Result<()> {
         instructions::create_pull(ctx, params)
+    }
+
+    pub fn verify_pull<'info>(
+        ctx: Context<'_, '_, '_, 'info, VerifyPull<'info>>,
+        params: VerifyPullParams,
+    ) -> Result<()> {
+        instructions::verify_pull(ctx, params)
     }
 
     pub fn buy_pull<'info>(ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>) -> Result<()> {
