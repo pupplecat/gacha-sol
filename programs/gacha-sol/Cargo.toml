@@ -22,6 +22,7 @@ anchor-lang = "0.31.1"
 anchor-spl = { version = "0.31.1", default-features = false, features = [
     "mint",
     "token",
+    "token_2022",
 ] }
 spl-token-2022 = { version = "8", features = ["no-entrypoint"] }
 spl-token-confidential-transfer-proof-extraction = "0.3"

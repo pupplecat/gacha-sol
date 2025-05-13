@@ -49,3 +49,7 @@ pub trait VerifyPullInstruction {
 pub trait BuyPullInstruction {
     fn transfer_purchase(&self, amount: u64) -> Result<()>;
 }
+
+pub trait ClaimPullInstruction {
+    fn transfer_reward(&self) -> Result<()>;
+}

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::ELGAMAL_CIPHERTEXT_LEN;
+use crate::state::ELGAMAL_PUBKEY_MAX_BASE64_LEN;
 
 /// Event emitted when a game config is initialized
 #[event]
@@ -18,7 +18,7 @@ pub struct GameConfigInitialized {
 pub struct PullCreated {
     pub id: u64,
     pub pull: Pubkey,
-    pub encrypted_amount: [u8; ELGAMAL_CIPHERTEXT_LEN],
+    pub encrypted_amount: [u8; ELGAMAL_PUBKEY_MAX_BASE64_LEN],
 }
 
 /// Event emitted when a pull is created

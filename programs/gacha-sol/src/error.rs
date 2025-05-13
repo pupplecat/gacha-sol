@@ -53,4 +53,7 @@ pub enum GachaError {
 
     #[msg("Decryptable balance conversion failed")]
     DecryptableBalanceConversionFailed,
+
+    #[msg("Ciphertext balance conversion failed")]
+    CipherTextBalanceConversionFailed,
 }
