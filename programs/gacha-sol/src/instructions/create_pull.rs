@@ -11,7 +11,7 @@ use anchor_lang::{
 use crate::{
     error::GachaError,
     event::PullCreated,
-    state::{CreatePullParams, GameConfig, Pull, AE_CIPHERTEXT_MAX_BASE64_LEN},
+    state::{CreatePullParams, GameConfig, Pull, Size, AE_CIPHERTEXT_MAX_BASE64_LEN},
     utils::token_2022::Token2022,
 };
 use spl_token_2022::{
@@ -69,18 +69,19 @@ pub struct CreatePull<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 32 + 1 + 8,
+        space = Pull::SIZE,
         seeds = [b"pull", bytemuck::bytes_of(&[params.pull_id])],
         bump
     )]
-    pub pull: Box<Account<'info, Pull>>,
+    pub pull: Account<'info, Pull>,
+
     #[account(mut, has_one = authority, has_one=reward_mint)]
     pub game_config: Box<Account<'info, GameConfig>>,
 
     /// CHECK: Token account to be internally created and initialized
     #[account(
         mut,
-        seeds = [b"reward_vault", &params.pull_id.to_le_bytes()],
+        seeds = [b"reward_vault", pull.key().as_ref()],
         bump,
     )]
     pub reward_vault: AccountInfo<'info>,
@@ -127,7 +128,11 @@ impl<'info> CreatePullInstruction for Context<'_, '_, '_, 'info, CreatePull<'inf
             &pull_pubkey,
         )?;
 
-        let reward_vault_seeds = self.accounts.pull.get_signer_seeds();
+        let reward_vault_seeds = &[
+            b"reward_vault",
+            pull_pubkey.as_ref(),
+            &[self.bumps.reward_vault],
+        ];
 
         invoke_signed(
             &create_account_ix,

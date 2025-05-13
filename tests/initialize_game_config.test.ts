@@ -41,7 +41,7 @@ describe('gacha-sol', () => {
       systemProgram: SYSTEM_PROGRAM_ID,
     }
     let tx = await program.methods
-      .initializePaymentVault({
+      .initializeGameConfig({
         pullPrice: new BN(1_000_000),
       })
       .accounts(accounts)

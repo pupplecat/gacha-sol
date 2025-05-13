@@ -2,10 +2,10 @@ use anchor_lang::prelude::*;
 
 pub mod error;
 pub mod event;
+pub mod pda;
 pub mod sdk;
 
 mod instructions;
-mod pda;
 mod utils;
 
 pub mod state;
@@ -20,7 +20,7 @@ pub mod gacha_sol {
 
     use super::*;
 
-    pub fn initialize_payment_vault<'info>(
+    pub fn initialize_game_config<'info>(
         ctx: Context<'_, '_, '_, 'info, InitializeGameConfig<'info>>,
         params: InitializeGameConfigParams,
     ) -> Result<()> {

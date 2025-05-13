@@ -12,8 +12,10 @@ pub trait CreatePullInstruction {
         decryptable_zero_balance_base64: &[u8; AE_CIPHERTEXT_MAX_BASE64_LEN],
     ) -> Result<()> {
         self.initialize_token_account_with_extension()?;
+
         self.configure_token_account(decryptable_zero_balance_base64)
             .map_err(|_| GachaError::ConfigureTokenAccountFailed)?;
+
         self.close_context_states()
             .map_err(|_| GachaError::CloseContextStateFailed)?;
 

@@ -22,32 +22,27 @@ pub fn initialize_game_config<'info>(
 ) -> Result<()> {
     require!(params.pull_price > 0, GachaError::InvalidZeroPullPrice);
 
-    // Setup game config
-    {
-        let game_config = &mut ctx.accounts.game_config;
-        game_config.authority = ctx.accounts.authority.key();
-        game_config.purchase_mint = ctx.accounts.purchase_mint.key();
-        game_config.reward_mint = ctx.accounts.reward_mint.key();
-        game_config.game_vault = ctx.accounts.game_vault.key();
-        game_config.pull_price = params.pull_price;
-        game_config.last_pull_id = 0;
-    }
-
     // Verify reward mint
     ctx.verify_reward_mint()?;
 
+    // Setup game config
+    let game_config = &mut ctx.accounts.game_config;
+    game_config.authority = ctx.accounts.authority.key();
+    game_config.purchase_mint = ctx.accounts.purchase_mint.key();
+    game_config.reward_mint = ctx.accounts.reward_mint.key();
+    game_config.game_vault = ctx.accounts.game_vault.key();
+    game_config.pull_price = params.pull_price;
+    game_config.last_pull_id = 0;
+
     // Emit event
-    {
-        let game_config = &ctx.accounts.game_config;
-        emit!(GameConfigInitialized {
-            game_config: ctx.accounts.game_config.key(),
-            authority: game_config.authority,
-            purchase_mint: game_config.purchase_mint,
-            reward_mint: game_config.reward_mint,
-            game_vault: game_config.game_vault,
-            pull_price: game_config.pull_price
-        });
-    }
+    emit!(GameConfigInitialized {
+        game_config: game_config.key(),
+        authority: game_config.authority,
+        purchase_mint: game_config.purchase_mint,
+        reward_mint: game_config.reward_mint,
+        game_vault: game_config.game_vault,
+        pull_price: game_config.pull_price
+    });
 
     Ok(())
 }
@@ -61,7 +56,7 @@ pub struct InitializeGameConfig<'info> {
         seeds = [b"game_config"],
         bump
     )]
-    pub game_config: Box<Account<'info, GameConfig>>,
+    pub game_config: Account<'info, GameConfig>,
     /// CHECK: Authority account.
     pub authority: AccountInfo<'info>,
     pub purchase_mint: Box<Account<'info, Mint>>,

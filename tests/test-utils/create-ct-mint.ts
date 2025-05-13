@@ -1,10 +1,5 @@
 import { AnchorProvider, toInstruction, web3 } from '@coral-xyz/anchor'
 import {
-  ExtensionType,
-  getInitializeConfidentialTransferMintInstruction,
-} from '@solana-program/token-2022'
-import { address } from '@solana/kit'
-import {
   createInitializeMintInstruction,
   MINT_SIZE,
   TOKEN_2022_PROGRAM_ID,
