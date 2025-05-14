@@ -9,8 +9,8 @@ use crate::{
     accounts, instruction,
     pda::{get_game_config_pubkey, get_pull_pubkey, get_reward_vault_pubkey},
     state::{
-        ApplyPullPendingBalanceParams, CreatePullParams, AE_CIPHERTEXT_MAX_BASE64_LEN,
-        ELGAMAL_PUBKEY_MAX_BASE64_LEN,
+        ApplyPullPendingBalanceParams, CreatePullParams, OpenPullParams,
+        AE_CIPHERTEXT_MAX_BASE64_LEN, ELGAMAL_PUBKEY_MAX_BASE64_LEN,
     },
     utils::{rent::Rent, zk_elgamal_proof_program::ZkElgamalProof},
     ID,
@@ -122,6 +122,37 @@ impl accounts::BuyPull {
             game_vault,
             purchase_mint,
             token_program: token::ID,
+        }
+    }
+}
+
+impl accounts::OpenPull {
+    pub fn populate(
+        buyer: Pubkey,
+        buyer_reward_account: Pubkey,
+        reward_mint: Pubkey,
+        equality_proof_account: Pubkey,
+        range_proof_account: Pubkey,
+        authority: Pubkey,
+        pull_id: u64,
+    ) -> Self {
+        let game_config = get_game_config_pubkey();
+        let pull = get_pull_pubkey(pull_id);
+        let reward_vault = get_reward_vault_pubkey(pull);
+
+        Self {
+            pull,
+            game_config,
+            buyer,
+            reward_vault,
+            buyer_reward_account,
+            reward_mint,
+            equality_proof_account,
+            range_proof_account,
+            authority,
+            zk_elgamal_proof_program: ZkElgamalProof::id(),
+            token_program: token::ID,
+            token_2022_program: token_2022::ID,
         }
     }
 }
@@ -250,6 +281,45 @@ impl instruction::BuyPull {
             program_id: ID,
             accounts: buy_pull_accounts,
             data: instruction::BuyPull {}.data(),
+        }
+    }
+}
+
+impl instruction::OpenPull {
+    pub fn populate(
+        buyer: Pubkey,
+        buyer_reward_account: Pubkey,
+        reward_mint: Pubkey,
+        equality_proof_account: Pubkey,
+        range_proof_account: Pubkey,
+        authority: Pubkey,
+        pull_id: u64,
+        amount: u64,
+        decimals: u8,
+        new_decryptable_available_balance: [u8; AE_CIPHERTEXT_MAX_BASE64_LEN],
+    ) -> Instruction {
+        let open_pull_accounts = accounts::OpenPull::populate(
+            buyer,
+            buyer_reward_account,
+            reward_mint,
+            equality_proof_account,
+            range_proof_account,
+            authority,
+            pull_id,
+        )
+        .to_account_metas(None);
+
+        Instruction {
+            program_id: ID,
+            accounts: open_pull_accounts,
+            data: instruction::OpenPull {
+                params: OpenPullParams {
+                    amount,
+                    decimals,
+                    new_decryptable_available_balance,
+                },
+            }
+            .data(),
         }
     }
 }

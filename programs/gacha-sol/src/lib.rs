@@ -49,7 +49,10 @@ pub mod gacha_sol {
         instructions::buy_pull(ctx)
     }
 
-    pub fn claim_pull<'info>(ctx: Context<'_, '_, '_, 'info, ClaimPull<'info>>) -> Result<()> {
-        instructions::claim_pull(ctx)
+    pub fn open_pull<'info>(
+        ctx: Context<'_, '_, '_, 'info, OpenPull<'info>>,
+        params: OpenPullParams,
+    ) -> Result<()> {
+        instructions::open_pull(ctx, params)
     }
 }

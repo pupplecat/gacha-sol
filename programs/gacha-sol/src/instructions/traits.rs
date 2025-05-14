@@ -54,6 +54,13 @@ pub trait BuyPullInstruction {
     fn transfer_purchase(&self, amount: u64) -> Result<()>;
 }
 
-pub trait ClaimPullInstruction {
-    fn transfer_reward(&self) -> Result<()>;
+pub trait OpenPullInstruction {
+    fn withdraw_reward(
+        &self,
+        amount: u64,
+        decimals: u8,
+        new_decryptable_available_balance: [u8; AE_CIPHERTEXT_MAX_BASE64_LEN],
+    ) -> Result<()>;
+
+    fn transfer_reward(&self, amount: u64, decimals: u8) -> Result<()>;
 }

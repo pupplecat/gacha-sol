@@ -103,7 +103,7 @@ async fn test_buy_pull() -> Result<()> {
     env.mint_purchase_token(&buyer_purchase_token_account, mint_amount)
         .await?;
 
-    let ix = instruction::BuyPull::populate(
+    let ix: solana_sdk::instruction::Instruction = instruction::BuyPull::populate(
         buyer_pubkey,
         buyer_purchase_token_account,
         env.game_vault_pubkey(),
@@ -131,7 +131,7 @@ async fn test_buy_pull() -> Result<()> {
         ta.amount
     };
 
-    println!("buyer remaining amount: {}", buyer_balance);
+    println!("buyer remaining amount: {}", buyer_balance); // 199__900_000_000
 
     let game_vault_balance = {
         let mut test_fixtures = env.test_fixtures.lock().unwrap();
@@ -143,7 +143,7 @@ async fn test_buy_pull() -> Result<()> {
         ta.amount
     };
 
-    println!("game_vault_balance: {}", game_vault_balance);
+    println!("game_vault_balance: {}", game_vault_balance); // 100_000_000
 
     Ok(())
 }

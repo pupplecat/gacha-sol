@@ -738,6 +738,31 @@ impl GachaSolTestEnvironment {
         Ok(())
     }
 
+    pub async fn buy_pull(
+        &self,
+        buyer: &Keypair,
+        buyer_purchase_token_account: &Pubkey,
+        pull_id: u64,
+    ) -> Result<()> {
+        let buyer_pubkey = buyer.pubkey();
+        let purchase_mint_pubkey = self.purchase_mint_pubkey();
+
+        let ix: solana_sdk::instruction::Instruction = instruction::BuyPull::populate(
+            buyer_pubkey,
+            *buyer_purchase_token_account,
+            self.game_vault_pubkey(),
+            purchase_mint_pubkey,
+            pull_id,
+        );
+
+        let tx = self
+            .process_instruction(ix, &vec![&buyer], Some(&self.payer))
+            .await?;
+
+        println!("buy pull tx: {}", tx);
+        Ok(())
+    }
+
     pub async fn ct_transfer_reward_token(
         &self,
         token_account_proof_account: SignerProofAccount,
