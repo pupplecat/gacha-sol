@@ -23,12 +23,12 @@ impl Size for Pull {
         + 1                     // verified
         + 1                     // claimed
         + 8                     // revealed_amount
-        + ELGAMAL_PUBKEY_MAX_BASE64_LEN //transfer_amount_auditor_ciphertext_lo
-        + ELGAMAL_PUBKEY_MAX_BASE64_LEN //transfer_amount_auditor_ciphertext_hi
-        + AE_CIPHERTEXT_MAX_BASE64_LEN //final_decryptable_available_balance
-        + 32                     //equality_proof_account
-        + 32                     //ciphertext_validity_proof_account
-        + 32                     //range_proof_account
+        // + ELGAMAL_PUBKEY_MAX_BASE64_LEN //transfer_amount_auditor_ciphertext_lo
+        // + ELGAMAL_PUBKEY_MAX_BASE64_LEN //transfer_amount_auditor_ciphertext_hi
+        // + AE_CIPHERTEXT_MAX_BASE64_LEN //final_decryptable_available_balance
+        // + 32                     //equality_proof_account
+        // + 32                     //ciphertext_validity_proof_account
+        // + 32                     //range_proof_account
         + 1                      // bump
         ;
 }

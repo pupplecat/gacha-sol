@@ -14,6 +14,7 @@ use solana_sdk::{
     signature::{Keypair, Signature},
     signer::Signer,
     system_instruction::create_account,
+    transaction::Transaction,
 };
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, instruction::create_associated_token_account,
@@ -113,6 +114,10 @@ impl ProgramTestFixtures {
             .program_simulator
             .process_ixs_with_default_compute_limit(instructions, signers, payer)
             .await?;
+
+        let transaction = Transaction::new_with_payer(&instructions, None);
+        let serialized_tx = bincode::serialize(&transaction)?;
+        println!("Transaction raw size: {} bytes", serialized_tx.len());
 
         Ok(signature)
     }

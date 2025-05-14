@@ -17,6 +17,7 @@ use solana_sdk::{
     pubkey::Pubkey,
     signature::{Keypair, Signature},
     signer::Signer,
+    transaction::Transaction,
 };
 use spl_token_2022::{
     extension::confidential_transfer::{
@@ -67,6 +68,13 @@ impl GachaSolTestEnvironment {
             .program_simulator
             .process_ixs_with_default_compute_limit(instructions, signers, payer)
             .await?;
+
+        let transaction = Transaction::new_with_payer(&instructions, None);
+        let serialized_tx = bincode::serialize(&transaction)?;
+        println!(
+            "!!! xxx Transaction raw size: {} bytes",
+            serialized_tx.len()
+        );
 
         Ok(signature)
     }
