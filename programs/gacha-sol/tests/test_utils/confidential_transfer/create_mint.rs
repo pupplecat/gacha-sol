@@ -80,6 +80,7 @@ pub fn create_confidential_transfer_mint_ixs(
     auditor_elgamal_pubkey: Option<PodElGamalPubkey>,
     decimals: u8,
 ) -> Result<Vec<Instruction>, anyhow::Error> {
+    println!("xxx create_confidential_transfer_mint_ixs mint {}", mint);
     // 1) compute needed space & rent
     let space = ExtensionType::try_calculate_account_len::<Mint>(&[
         ExtensionType::ConfidentialTransferMint,
@@ -112,5 +113,5 @@ pub fn create_confidential_transfer_mint_ixs(
     }
     .instruction(&token_2022_program_id(), mint)?;
 
-    Ok(vec![ix_create_account, ix_init_mint, ix_ct])
+    Ok(vec![ix_create_account, ix_ct, ix_init_mint])
 }

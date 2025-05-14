@@ -4,8 +4,15 @@ use anyhow::Result;
 use gacha_sol::instruction;
 use solana_sdk::{signature::Keypair, signer::Signer as _};
 use spl_token_2022::{
-    extension::confidential_transfer::instruction::{ZeroCiphertextProofData, ZkProofData},
+    extension::{
+        confidential_transfer::{
+            instruction::{ZeroCiphertextProofData, ZkProofData},
+            ConfidentialTransferAccount,
+        },
+        BaseStateWithExtensions, StateWithExtensions,
+    },
     solana_zk_sdk::encryption::pod::elgamal::PodElGamalCiphertext,
+    state::Account as Token2022Account,
     ui_amount_to_amount,
 };
 use spl_token_confidential_transfer_ciphertext_arithmetic::subtract;
@@ -38,6 +45,7 @@ async fn test_verify_pull() -> Result<()> {
     let pull_pubkey = env.pull_pubkey(pull_id);
     let reward_vault_pubkey = env.reward_vault_pubkey(pull_pubkey);
 
+    print!("xxx s-create_ct_token_account");
     env.create_ct_token_account(
         &reward_mint_pubkey,
         &env.authority,
@@ -45,8 +53,30 @@ async fn test_verify_pull() -> Result<()> {
     )
     .await?;
 
+    // {
+    //     let mut test_fixtures = env.test_fixtures.lock().unwrap();
+    //     let account = test_fixtures
+    //         .program_simulator
+    //         .get_account(token_account_pubkey)
+    //         .await?;
+
+    //     let state = StateWithExtensions::<Token2022Account>::unpack(&acct.data)
+    //         .map_err(|_| anyhow::anyhow!("Failed to unpack Account+extensions"))?;
+
+    //     // 3) grab the ConfidentialTransferAccount extension
+    //     let ext = state
+    //         .get_extension::<ConfidentialTransferAccount>()
+    //         .map_err(|_| anyhow::anyhow!("Account is missing ConfidentialTransferAccount"))?;
+
+    //     println!("xxx ext.{}", ext.available_balance)
+    // }
+    println!("xxx e-create_ct_token_account: {}", token_account_pubkey);
+
     let mint_amount = ui_amount_to_amount(100_000.0, env.decimals);
     env.mint_reward_token(&token_account_pubkey, mint_amount)
+        .await?;
+
+    env.deposit_reward(&token_account_pubkey, &env.authority, mint_amount)
         .await?;
 
     env.apply_pending_balance(token_account_proof_account.clone(), &env.authority)

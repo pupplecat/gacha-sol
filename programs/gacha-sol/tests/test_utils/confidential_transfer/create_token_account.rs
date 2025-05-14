@@ -6,9 +6,7 @@ use solana_sdk::{
 use spl_token_2022::{
     error::TokenError,
     extension::{
-        confidential_transfer::instruction::{
-            configure_account, PubkeyValidityProofData, ZeroCiphertextProofData,
-        },
+        confidential_transfer::instruction::{configure_account, PubkeyValidityProofData},
         ExtensionType,
     },
     instruction::{initialize_account3, reallocate},
@@ -47,7 +45,7 @@ pub fn create_confidential_token_account_ixs(
 
     // Instruction to reallocate the token account to include the `ConfidentialTransferAccount` extension
     let reallocate_instruction = reallocate(
-        &spl_token_2022::id(),
+        &token_2022_program_id(),
         &token_account_pubkey,
         payer_pubkey,
         &owner_pubkey,

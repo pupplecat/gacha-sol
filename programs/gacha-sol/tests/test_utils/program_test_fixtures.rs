@@ -57,6 +57,8 @@ use crate::{
     },
 };
 
+use super::confidential_transfer::create_confidential_transfer_mint_ixs;
+
 pub struct ProgramTestFixtures {
     pub program_simulator: ProgramSimulator,
     pub payer: Arc<Keypair>,
@@ -541,16 +543,12 @@ impl ProgramTestFixtures {
         let authority_pubkey = mint_authority.pubkey();
 
         let mint_pubkey = mint_proof_account.pubkey();
-        let mint_ae_key = mint_proof_account.get_ae_key()?;
-        let supply_elgamal_pubkey = mint_proof_account.get_pod_elgamal_pubkey()?;
 
-        let mint_ixs = create_mint_with_confidential_extensions_ixs(
+        let mint_ixs = create_confidential_transfer_mint_ixs(
             &payer_pubkey,
             &mint_pubkey,
             &authority_pubkey,
-            Some(&authority_pubkey),
-            &mint_ae_key,
-            &supply_elgamal_pubkey,
+            None,
             None,
             decimals,
         )?;
@@ -563,6 +561,8 @@ impl ProgramTestFixtures {
                 None,
             )
             .await?;
+
+        println!("create confidential transfer mint tx: {}", tx);
 
         Ok(tx)
     }

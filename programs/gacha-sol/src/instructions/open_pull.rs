@@ -35,13 +35,14 @@ pub fn open_pull<'info>(
 
     pull_account.revealed_amount = params.amount;
     pull_account.claimed = true;
-
+    msg!("xxx open_pull withdraw");
     ctx.withdraw_reward(
         params.amount,
         params.decimals,
         params.new_decryptable_available_balance,
     )?;
 
+    msg!("xxx open_pull transfer_reward");
     ctx.transfer_reward(params.amount, params.decimals)?;
 
     // Emit an event
@@ -107,10 +108,10 @@ impl<'info> OpenPullInstruction for Context<'_, '_, '_, 'info, OpenPull<'info>> 
         let cpi_accounts = TransferChecked {
             from: self.accounts.reward_vault.to_account_info(),
             to: self.accounts.buyer_reward_account.to_account_info(),
-            authority: self.accounts.buyer.to_account_info(),
+            authority: self.accounts.pull.to_account_info(),
             mint: self.accounts.reward_mint.to_account_info(),
         };
-        let token_program = self.accounts.token_program.to_account_info().clone();
+        let token_program = self.accounts.token_2022_program.to_account_info().clone();
         let cpi_context = CpiContext::new_with_signer(token_program, cpi_accounts, signer);
 
         token_2022::transfer_checked(cpi_context, amount, decimals)?;

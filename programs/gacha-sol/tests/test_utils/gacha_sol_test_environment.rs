@@ -4,7 +4,6 @@ use std::{
     vec,
 };
 
-use anchor_spl::token::spl_token::instruction::mint_to;
 use anyhow::Result;
 use gacha_sol::{
     instruction,
@@ -12,6 +11,7 @@ use gacha_sol::{
     state::{GameConfig, Pull, AE_CIPHERTEXT_MAX_BASE64_LEN, ELGAMAL_PUBKEY_MAX_BASE64_LEN},
 };
 use solana_banks_interface::BanksTransactionResultWithSimulation;
+use solana_program::pubkey;
 use solana_sdk::{
     instruction::Instruction,
     pubkey::Pubkey,
@@ -21,22 +21,20 @@ use solana_sdk::{
 use spl_token_2022::{
     extension::confidential_transfer::{
         account_info::{ApplyPendingBalanceAccountInfo, TransferAccountInfo},
-        instruction::{PubkeyValidityProofData, ZeroCiphertextProofData, ZkProofData},
+        instruction::{deposit, PubkeyValidityProofData, ZeroCiphertextProofData, ZkProofData},
     },
+    instruction::mint_to,
     solana_zk_sdk::encryption::pod::{
         auth_encryption::PodAeCiphertext, elgamal::PodElGamalCiphertext,
     },
 };
 use spl_token_confidential_transfer_ciphertext_arithmetic::subtract;
 use spl_token_confidential_transfer_proof_extraction::instruction::ProofLocation;
-use spl_token_confidential_transfer_proof_generation::{
-    mint::{mint_split_proof_data, MintProofData},
-    transfer::TransferProofData,
-};
+use spl_token_confidential_transfer_proof_generation::transfer::TransferProofData;
 
 use crate::test_utils::confidential_transfer::{
     confidential_mint_to_ixs, confidential_transfer_ixs, create_close_context_state_ixs,
-    get_zk_proof_context_state_account_creation_instructions,
+    get_zk_proof_context_state_account_creation_instructions, token_2022_program_id,
 };
 
 use super::{
@@ -127,6 +125,7 @@ impl GachaSolTestEnvironment {
                 .create_mint(&purchase_mint_authority.pubkey(), decimals)
                 .await?
         };
+        println!("xxx purchase_mint {}", purchase_mint);
 
         {
             let mut test_fixtures = test_fixtures.lock().unwrap();
@@ -140,6 +139,8 @@ impl GachaSolTestEnvironment {
                 .await?;
         };
 
+        println!("xxx reward_mint {}", reward_mint_proof_account.pubkey());
+
         let game_vault = {
             let mut test_fixtures = test_fixtures.lock().unwrap();
 
@@ -147,6 +148,8 @@ impl GachaSolTestEnvironment {
                 .create_ata(&purchase_mint, &authority.pubkey())
                 .await?
         };
+
+        println!("xxx game_vault {}", game_vault);
 
         Ok(Self {
             test_fixtures,
@@ -422,168 +425,34 @@ impl GachaSolTestEnvironment {
         mint_amount: u64,
     ) -> Result<()> {
         let mint_pubkey = self.reward_mint_pubkey();
-        let mint_proof_account = &self.reward_mint_proof_account;
-
-        let destination_elgamal_pubkey = {
+        let token_program_id = {
             let mut test_fixtures = self.test_fixtures.lock().unwrap();
             test_fixtures
-                .get_token_account_elgamal_pubkey(token_account_pubkey)
+                .program_simulator
+                .get_account(mint_pubkey)
                 .await?
+                .owner
         };
 
-        let (current_supply_ciphertext, current_supply, new_decryptable_supply) = {
-            let mut test_fixtures = self.test_fixtures.lock().unwrap();
-            let current_mint_confidentail_supply = test_fixtures
-                .get_mint_confidential_supply(&mint_pubkey)
-                .await?;
+        println!("xxx token_program_id {}", token_program_id);
+        println!("xxx token_2022_program_id {}", token_2022_program_id());
+        println!("xxx mint_pubkey {}", mint_pubkey);
+        println!("xxx token_account_pubkey {}", token_account_pubkey);
 
-            let current_supply = test_fixtures
-                .get_mint_decrypted_decryptable_supply(mint_proof_account)
-                .await?;
-
-            let new_supply = current_supply + mint_amount;
-            let new_decryptable_supply = mint_proof_account.encrypt_supply(new_supply)?;
-
-            (
-                current_mint_confidentail_supply,
-                current_supply,
-                new_decryptable_supply,
-            )
-        };
-
-        let supply_elgamal_keypair = mint_proof_account.get_pod_elgamal_keypair()?;
-
-        let MintProofData {
-            equality_proof_data,
-            ciphertext_validity_proof_data_with_ciphertext,
-            range_proof_data,
-        } = mint_split_proof_data(
-            &current_supply_ciphertext.try_into()?,
-            mint_amount,
-            current_supply,
-            &supply_elgamal_keypair,
-            &destination_elgamal_pubkey.try_into()?,
-            None, // no auditor
-        )?;
-
-        // Create 3 proofs ------------------------------------------------------
-
-        // Generate address for equality proof account
-        let equality_proof_context_state_account = Keypair::new();
-        let equality_proof_pubkey = equality_proof_context_state_account.pubkey();
-
-        // Generate address for ciphertext validity proof account
-        let ciphertext_validity_proof_context_state_account = Keypair::new();
-        let ciphertext_validity_proof_pubkey =
-            ciphertext_validity_proof_context_state_account.pubkey();
-
-        // Generate address for range proof account
-        let range_proof_context_state_account = Keypair::new();
-        let range_proof_pubkey = range_proof_context_state_account.pubkey();
-
-        let payer_pubkey = self.payer.pubkey();
-        let authority_pubkey = self.reward_mint_authority.pubkey();
-
-        // Range Proof Instructions------------------------------------------------------------------------------
-        let (range_create_ix, range_verify_ix) =
-            get_zk_proof_context_state_account_creation_instructions(
-                &payer_pubkey,
-                &range_proof_context_state_account.pubkey(),
-                &authority_pubkey,
-                &range_proof_data,
-            )?;
-
-        // Equality Proof Instructions---------------------------------------------------------------------------
-        let (equality_create_ix, equality_verify_ix) =
-            get_zk_proof_context_state_account_creation_instructions(
-                &payer_pubkey,
-                &equality_proof_context_state_account.pubkey(),
-                &authority_pubkey,
-                &equality_proof_data,
-            )?;
-
-        // Ciphertext Validity Proof Instructions ----------------------------------------------------------------
-        let (cv_create_ix, cv_verify_ix) =
-            get_zk_proof_context_state_account_creation_instructions(
-                &payer_pubkey,
-                &ciphertext_validity_proof_context_state_account.pubkey(),
-                &authority_pubkey,
-                &ciphertext_validity_proof_data_with_ciphertext.proof_data,
-            )?;
-
-        let proof_accounts_ixs = [
-            range_create_ix,
-            equality_create_ix,
-            cv_create_ix,
-            range_verify_ix,
-            equality_verify_ix,
-            cv_verify_ix,
-        ];
-
-        let proof_account_tx = self
-            .process_instructions(
-                &proof_accounts_ixs,
-                &vec![
-                    &range_proof_context_state_account,
-                    &equality_proof_context_state_account,
-                    &ciphertext_validity_proof_context_state_account,
-                ],
-                Some(&self.payer),
-            )
-            .await?;
-
-        println!("proof accounts tx: {}", proof_account_tx);
-
-        // Confidential Mint To Instructions ---------------------------------------------------------------
-
-        let equality_proof_location = ProofLocation::ContextStateAccount(&equality_proof_pubkey);
-        let ciphertext_validity_proof_location =
-            ProofLocation::ContextStateAccount(&ciphertext_validity_proof_pubkey);
-        let range_proof_location = ProofLocation::ContextStateAccount(&range_proof_pubkey);
-
-        let mint_to_ixs = confidential_mint_to_ixs(
+        let ix = mint_to(
+            &token_2022_program_id(),
             &mint_pubkey,
-            &authority_pubkey,
-            &token_account_pubkey,
-            &new_decryptable_supply.try_into()?,
-            &ciphertext_validity_proof_data_with_ciphertext.ciphertext_lo,
-            &ciphertext_validity_proof_data_with_ciphertext.ciphertext_hi,
-            equality_proof_location,
-            ciphertext_validity_proof_location,
-            range_proof_location,
+            token_account_pubkey,
+            &self.reward_mint_authority.pubkey(),
+            &[],
+            mint_amount,
         )?;
 
-        let mint_to_tx = self
-            .process_instructions(
-                &mint_to_ixs,
-                &vec![&self.reward_mint_authority],
-                Some(&self.payer),
-            )
+        let tx = self
+            .process_instruction(ix, &vec![&self.reward_mint_authority], None)
             .await?;
 
-        println!("mint to tx: {}", mint_to_tx);
-
-        // Close context states Instructions ---------------------------------------------------------------
-
-        let close_context_state_ixs = create_close_context_state_ixs(
-            &[
-                equality_proof_pubkey,
-                ciphertext_validity_proof_pubkey,
-                range_proof_pubkey,
-            ],
-            &authority_pubkey,
-            &payer_pubkey,
-        );
-
-        let close_context_state_tx = self
-            .process_instructions(
-                &close_context_state_ixs,
-                &vec![&self.reward_mint_authority],
-                Some(&self.payer),
-            )
-            .await?;
-
-        println!("close context accounts tx: {}", close_context_state_tx);
+        println!("mint reward_token to tx: {}", tx);
 
         Ok(())
     }
@@ -632,6 +501,34 @@ impl GachaSolTestEnvironment {
             .await?;
 
         println!("apply pending balance tx: {}", apply_pending_balance_tx);
+
+        Ok(())
+    }
+
+    pub async fn deposit_reward(
+        &self,
+        token_account_pubkey: &Pubkey,
+        owner: &Keypair,
+        amount: u64,
+    ) -> Result<()> {
+        let mint_pubkey = self.reward_mint_pubkey();
+        let owner_pubkey = owner.pubkey();
+
+        let ix = deposit(
+            &token_2022_program_id(),
+            &token_account_pubkey,
+            &mint_pubkey,
+            amount,
+            self.decimals,
+            &owner_pubkey,
+            &[],
+        )?;
+
+        let tx = self
+            .process_instruction(ix, &vec![&owner], Some(&self.payer))
+            .await?;
+
+        println!("deposit tx: {}", tx);
 
         Ok(())
     }
@@ -959,7 +856,7 @@ impl GachaSolTestEnvironment {
             .process_instruction(ix, &vec![&self.purchase_mint_authority], None)
             .await?;
 
-        println!("mint to tx: {}", tx);
+        println!("mint purchase to tx: {}", tx);
         Ok(())
     }
 }

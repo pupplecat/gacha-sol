@@ -2,8 +2,16 @@ use anyhow::Result;
 use gacha_sol::{instruction, state::AE_CIPHERTEXT_MAX_BASE64_LEN};
 use solana_sdk::signer::Signer as _;
 use spl_token_2022::{
-    extension::confidential_transfer::account_info::ApplyPendingBalanceAccountInfo,
-    solana_zk_sdk::encryption::pod::auth_encryption::PodAeCiphertext, ui_amount_to_amount,
+    extension::{
+        confidential_transfer::{
+            account_info::ApplyPendingBalanceAccountInfo, ConfidentialTransferAccount,
+            ConfidentialTransferMint,
+        },
+        BaseStateWithExtensions, StateWithExtensions,
+    },
+    solana_zk_sdk::encryption::pod::auth_encryption::PodAeCiphertext,
+    state::{Account, Mint},
+    ui_amount_to_amount,
 };
 
 use crate::test_utils::{
@@ -28,6 +36,7 @@ async fn test_apply_pull_pending_balance() -> Result<()> {
     let reward_mint_pubkey = env.reward_mint_pubkey();
     let token_account_proof_account = SignerProofAccount::new();
     let token_account_pubkey = token_account_proof_account.pubkey();
+    let authority_pubkey = env.authority.pubkey();
     let pull_pubkey = env.pull_pubkey(pull_id);
     let reward_vault_pubkey = env.reward_vault_pubkey(pull_pubkey);
 
@@ -38,8 +47,66 @@ async fn test_apply_pull_pending_balance() -> Result<()> {
     )
     .await?;
 
+    {
+        let mut test_fixtures = env.test_fixtures.lock().unwrap();
+
+        let account = test_fixtures
+            .program_simulator
+            .get_account(reward_mint_pubkey)
+            .await?;
+
+        let state = StateWithExtensions::<Mint>::unpack(&account.data)
+            .map_err(|_| anyhow::anyhow!("Failed to unpack Account+extensions"))?;
+
+        println!(
+            "xxx state.base.mint_authority: {:?}",
+            &state.base.mint_authority
+        );
+
+        let ext = state
+            .get_extension::<ConfidentialTransferMint>()
+            .map_err(|_| anyhow::anyhow!("Account is missing ConfidentialTransferAccount"))?;
+
+        println!(
+            "xxx state.base.supply: {:?} {:?}",
+            state.base.supply, ext.auto_approve_new_accounts
+        );
+    };
+
+    let (balance, pending_lo, pending_hi) = {
+        let mut test_fixtures = env.test_fixtures.lock().unwrap();
+
+        let account = test_fixtures
+            .program_simulator
+            .get_account(token_account_pubkey)
+            .await?;
+
+        let state = StateWithExtensions::<Account>::unpack(&account.data)
+            .map_err(|_| anyhow::anyhow!("Failed to unpack Account+extensions"))?;
+
+        println!("xxx state.base.mint: {}", state.base.mint);
+
+        let ext = state
+            .get_extension::<ConfidentialTransferAccount>()
+            .map_err(|_| anyhow::anyhow!("Account is missing ConfidentialTransferAccount"))?;
+
+        (
+            state.base.amount,
+            ext.pending_balance_lo,
+            ext.pending_balance_hi,
+        )
+    };
+
+    println!(
+        "xxx balance {}, pending_lo: {}, pending_hi: {}",
+        balance, pending_lo, pending_hi
+    );
+
     let mint_amount = ui_amount_to_amount(100_000.0, env.decimals);
     env.mint_reward_token(&token_account_pubkey, mint_amount)
+        .await?;
+
+    env.deposit_reward(&token_account_pubkey, &env.authority, mint_amount)
         .await?;
 
     env.apply_pending_balance(token_account_proof_account.clone(), &env.authority)

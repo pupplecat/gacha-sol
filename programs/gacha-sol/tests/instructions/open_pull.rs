@@ -46,6 +46,9 @@ async fn test_open_pull() -> Result<()> {
     env.mint_reward_token(&token_account_pubkey, mint_amount)
         .await?;
 
+    env.deposit_reward(&token_account_pubkey, &env.authority, mint_amount)
+        .await?;
+
     env.apply_pending_balance(token_account_proof_account.clone(), &env.authority)
         .await?;
 
@@ -243,6 +246,11 @@ async fn test_open_pull() -> Result<()> {
         .await?;
 
     println!("open pull tx: {}", tx);
+
+    let pull = env.get_pull(pull_id).await?;
+
+    assert_eq!(pull.claimed, true);
+    assert_eq!(pull.revealed_amount, current_balance);
 
     Ok(())
 }
