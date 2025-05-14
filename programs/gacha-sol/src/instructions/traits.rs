@@ -16,8 +16,9 @@ pub trait CreatePullInstruction {
         self.configure_token_account(decryptable_zero_balance_base64)
             .map_err(|_| GachaError::ConfigureTokenAccountFailed)?;
 
-        self.close_context_states()
-            .map_err(|_| GachaError::CloseContextStateFailed)?;
+        // TODO: revision this logic, this cause transaction failed with missing zk-proof program account (both localnet and devnet)
+        // self.close_context_states()
+        //     .map_err(|_| GachaError::CloseContextStateFailed)?;
 
         msg!(
             "Configured confidential transfer for token account: {}",

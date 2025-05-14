@@ -1868,6 +1868,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "base64 0.12.3",
+ "bincode",
  "bytemuck",
  "cargo_metadata",
  "rand 0.9.1",
