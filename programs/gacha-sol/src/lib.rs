@@ -13,7 +13,7 @@ pub mod state;
 use instructions::*;
 use state::*;
 
-declare_id!("B71jh4j5NX3cXyKJ92YjpNApiHk93x2UKXPSqicY5jz1");
+declare_id!("EFCVTLN9fUDx4iRJgWDqoQRM7cSsDzR3CpNT4XUXUUhD");
 
 #[program]
 pub mod gacha_sol {
