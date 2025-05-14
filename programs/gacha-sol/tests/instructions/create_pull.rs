@@ -108,22 +108,10 @@ async fn test_create_pull() -> Result<()> {
     assert_eq!(pull.verified, false);
     assert_eq!(pull.claimed, false);
     assert_eq!(pull.revealed_amount, 0);
-    // assert_eq!(
-    //     pull.transfer_amount_auditor_ciphertext_lo,
-    //     [0u8; ELGAMAL_PUBKEY_MAX_BASE64_LEN]
-    // );
-    // assert_eq!(
-    //     pull.transfer_amount_auditor_ciphertext_hi,
-    //     [0u8; ELGAMAL_PUBKEY_MAX_BASE64_LEN]
-    // );
-    // assert_eq!(
-    //     pull.final_decryptable_available_balance,
-    //     [0u8; AE_CIPHERTEXT_MAX_BASE64_LEN]
-    // );
-    // assert_eq!(pull.equality_proof_account, Pubkey::default());
-    // assert_eq!(pull.ciphertext_validity_proof_account, Pubkey::default());
-    // assert_eq!(pull.range_proof_account, Pubkey::default());
     assert!(pull.bump > 0);
+
+    let game_config = env.get_game_config().await?;
+    assert_eq!(game_config.last_pull_id, pull.id);
 
     Ok(())
 }

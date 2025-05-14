@@ -35,14 +35,15 @@ pub fn open_pull<'info>(
 
     pull_account.revealed_amount = params.amount;
     pull_account.claimed = true;
-    msg!("xxx open_pull withdraw");
+
+    // Withdraw confidential fund, prepare for transferring
     ctx.withdraw_reward(
         params.amount,
         params.decimals,
         params.new_decryptable_available_balance,
     )?;
 
-    msg!("xxx open_pull transfer_reward");
+    // Transfer reward to buyer
     ctx.transfer_reward(params.amount, params.decimals)?;
 
     // Emit an event

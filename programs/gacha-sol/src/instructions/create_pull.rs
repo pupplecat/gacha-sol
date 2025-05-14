@@ -48,6 +48,11 @@ pub fn create_pull<'info>(
         pull.bump = ctx.bumps.pull;
     }
 
+    {
+        let game_config = &mut ctx.accounts.game_config;
+        game_config.last_pull_id = params.pull_id;
+    }
+
     ctx.create_and_configure_reward_vault(&params.decryptable_zero_balance_base64)?;
 
     // Emit an event
