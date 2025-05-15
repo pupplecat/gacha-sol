@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-gacha_sol = "EFCVTLN9fUDx4iRJgWDqoQRM7cSsDzR3CpNT4XUXUUhD"
+gacha_sol = "GaChaWso1g5y2Rby6pwLSRxezyoxtbaMDyb5sqwYvNGq"
 
 [registry]
 url = "https://api.apr.dev"
