@@ -11,7 +11,7 @@ use super::BuyPullInstruction;
 
 pub fn buy_pull<'info>(
     ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>,
-    params: BuyPullParams,
+    _params: BuyPullParams,
 ) -> Result<()> {
     let pull = &mut ctx.accounts.pull;
     let game_config = &ctx.accounts.game_config;

@@ -17,10 +17,7 @@ use crate::{
 use spl_token_2022::{
     extension::{confidential_transfer::instruction::configure_account, ExtensionType},
     instruction::initialize_account3,
-    solana_zk_sdk::{
-        encryption::pod::auth_encryption::PodAeCiphertext,
-        zk_elgamal_proof_program::instruction::{close_context_state, ContextStateInfo},
-    },
+    solana_zk_sdk::encryption::pod::auth_encryption::PodAeCiphertext,
     state::Account as TokenAccount,
 };
 use spl_token_confidential_transfer_proof_extraction::instruction::ProofLocation;
@@ -217,29 +214,6 @@ impl<'info> CreatePullInstruction for Context<'_, '_, '_, 'info, CreatePull<'inf
 
             invoke_signed(&ix, &accounts, signer)?;
         }
-
-        Ok(())
-    }
-
-    fn close_context_states(&self) -> Result<()> {
-        let signer_seeds = &self.accounts.pull.get_signer_seeds();
-        let signer = &[&signer_seeds[..]];
-
-        let instruction = close_context_state(
-            ContextStateInfo {
-                context_state_account: self.accounts.pubkey_validity_proof_data.key,
-                context_state_authority: &self.accounts.pull.key(),
-            },
-            self.accounts.payer.key,
-        );
-
-        let accounts = vec![
-            self.accounts.pubkey_validity_proof_data.to_account_info(),
-            self.accounts.payer.to_account_info(),
-            self.accounts.pull.to_account_info(),
-        ];
-
-        invoke_signed(&instruction, &accounts, signer)?;
 
         Ok(())
     }

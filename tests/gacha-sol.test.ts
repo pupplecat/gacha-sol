@@ -10,6 +10,6 @@ describe('gacha-sol', () => {
   const program = anchor.workspace.gachaSol as Program<GachaSol>
 
   it('Is initialized!', async () => {
-    console.log('K K K')
+    console.log('Good to go')
   })
 })
