@@ -57,9 +57,12 @@ pub fn open_pull<'info>(
 }
 
 #[derive(Accounts)]
+#[instruction(params: OpenPullParams)]
 pub struct OpenPull<'info> {
     #[account(mut,
         has_one=reward_vault,
+        seeds = [b"pull", params.pull_id.to_le_bytes().as_ref()],
+        bump
     )]
     pub pull: Account<'info, Pull>,
     #[account(

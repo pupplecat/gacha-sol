@@ -75,7 +75,7 @@ pub struct CreatePull<'info> {
         init,
         payer = payer,
         space = Pull::SIZE,
-        seeds = [b"pull", bytemuck::bytes_of(&[params.pull_id])],
+        seeds = [b"pull", params.pull_id.to_le_bytes().as_ref()],
         bump
     )]
     pub pull: Account<'info, Pull>,

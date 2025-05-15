@@ -9,7 +9,7 @@ use crate::{
     accounts, instruction,
     pda::{get_game_config_pubkey, get_pull_pubkey, get_reward_vault_pubkey},
     state::{
-        ApplyPullPendingBalanceParams, CreatePullParams, OpenPullParams,
+        ApplyPullPendingBalanceParams, BuyPullParams, CreatePullParams, OpenPullParams,
         AE_CIPHERTEXT_MAX_BASE64_LEN, ELGAMAL_PUBKEY_MAX_BASE64_LEN,
     },
     utils::{rent::Rent, zk_elgamal_proof_program::ZkElgamalProof},
@@ -280,7 +280,10 @@ impl instruction::BuyPull {
         Instruction {
             program_id: ID,
             accounts: buy_pull_accounts,
-            data: instruction::BuyPull {}.data(),
+            data: instruction::BuyPull {
+                params: BuyPullParams { pull_id },
+            }
+            .data(),
         }
     }
 }
@@ -314,6 +317,7 @@ impl instruction::OpenPull {
             accounts: open_pull_accounts,
             data: instruction::OpenPull {
                 params: OpenPullParams {
+                    pull_id,
                     amount,
                     decimals,
                     new_decryptable_available_balance,

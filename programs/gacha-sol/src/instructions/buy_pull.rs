@@ -4,12 +4,15 @@ use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use crate::{
     error::GachaError,
     event::PullBought,
-    state::{GameConfig, Pull},
+    state::{BuyPullParams, GameConfig, Pull},
 };
 
 use super::BuyPullInstruction;
 
-pub fn buy_pull<'info>(ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>) -> Result<()> {
+pub fn buy_pull<'info>(
+    ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>,
+    params: BuyPullParams,
+) -> Result<()> {
     let pull = &mut ctx.accounts.pull;
     let game_config = &ctx.accounts.game_config;
 
@@ -36,10 +39,14 @@ pub fn buy_pull<'info>(ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>) -> Resul
 }
 
 #[derive(Accounts)]
+#[instruction(params: BuyPullParams)]
 pub struct BuyPull<'info> {
     #[account(has_one=game_vault)]
     pub game_config: Account<'info, GameConfig>,
-    #[account(mut)]
+    #[account(mut,
+        seeds = [b"pull", params.pull_id.to_le_bytes().as_ref()],
+        bump
+    )]
     pub pull: Account<'info, Pull>,
     #[account(mut)]
     pub buyer: Signer<'info>,

@@ -45,8 +45,11 @@ pub mod gacha_sol {
         instructions::verify_pull(ctx)
     }
 
-    pub fn buy_pull<'info>(ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>) -> Result<()> {
-        instructions::buy_pull(ctx)
+    pub fn buy_pull<'info>(
+        ctx: Context<'_, '_, '_, 'info, BuyPull<'info>>,
+        params: BuyPullParams,
+    ) -> Result<()> {
+        instructions::buy_pull(ctx, params)
     }
 
     pub fn open_pull<'info>(

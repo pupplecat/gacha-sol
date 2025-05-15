@@ -15,10 +15,8 @@ pub fn get_game_config_pubkey() -> Pubkey {
 }
 
 pub fn get_pull_pubkey(pull_id: u64) -> Pubkey {
-    let pull_id_seed = [pull_id];
-    let pull_id_bytes = bytemuck::bytes_of(&pull_id_seed);
-
-    find_program_address(&[b"pull", pull_id_bytes])
+    let pull_id_seed = pull_id.to_le_bytes();
+    find_program_address(&[b"pull", pull_id_seed.as_ref()])
 }
 
 pub fn get_reward_vault_pubkey(pull: Pubkey) -> Pubkey {
