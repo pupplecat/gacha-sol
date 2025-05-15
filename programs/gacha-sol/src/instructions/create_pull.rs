@@ -45,6 +45,7 @@ pub fn create_pull<'info>(
         pull.verified = false;
         pull.claimed = false;
         pull.revealed_amount = 0;
+        pull.pull_id_bytes = params.pull_id.to_le_bytes();
         pull.bump = ctx.bumps.pull;
     }
 
