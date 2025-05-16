@@ -2,6 +2,8 @@
 
 Welcome to **Gacha-Sol**, a decentralized gacha game built on the Solana blockchain using Anchor. This smart contract implements a Gashapon-inspired game where users can buy pulls, and an authority handles reward distribution with confidential transfer (CT) mechanics for privacy. The project showcases Solana's capabilities, including token management and zero-ciphertext proof verification.
 
+Presentation: https://pupplecat.github.io/gacha-sol-talk
+
 ## Overview
 
 - **Purpose**: A gacha game on Solana where users purchase pulls using a public token payment. The game authority verifies the reward vault balance using zero-ciphertext proofs to ensure it matches the expected amount for each pull. Rewards are then confidentially withdrawn from the vault and transferred to the user via a standard transfer after authority verification.
